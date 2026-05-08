@@ -1,0 +1,22 @@
+{
+  "name": "memu-web",
+  "version": "1.5.1",
+  "description": "memU elegant web GUI - SolidJS + SolidStart",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vinxi dev",
+    "build": "vinxi build",
+    "start": "vinxi start"
+  },
+  "dependencies": {
+    "solid-js": "^1.9.5",
+    "@solidjs/start": "^1.1.3",
+    "@solidjs/router": "^0.15.3"
+  },
+  "devDependencies": {
+    "vinxi": "^0.5.4",
+    "vite": "^6.3.2",
+    "typescript": "^5.8.3"
+  }
+}
