@@ -8,9 +8,10 @@ import httpx
 
 
 class LocalFS:
-    def __init__(self, base_dir: str):
-        self.base = pathlib.Path(base_dir)
+    def __init__(self, base_dir: str, allowed_dirs: list[str] | None = None):
+        self.base = pathlib.Path(base_dir).resolve()
         self.base.mkdir(parents=True, exist_ok=True)
+        self.allowed_dirs = [pathlib.Path(d).resolve() for d in (allowed_dirs or [])]
 
     def _get_filename_from_url(self, url: str, modality: str) -> str:
         """
@@ -54,13 +55,24 @@ class LocalFS:
 
         return filename
 
+    def _validate_local_path(self, path: pathlib.Path) -> pathlib.Path:
+        resolved = path.resolve()
+        if self.allowed_dirs:
+            if not any(
+                str(resolved).startswith(str(allowed)) for allowed in self.allowed_dirs
+            ):
+                msg = f"Access denied: '{path}' is not in an allowed directory"
+                raise PermissionError(msg)
+        return resolved
+
     async def fetch(self, url: str, modality: str) -> tuple[str, str | None]:
         # Local path
         p = pathlib.Path(url)
         if p.exists():
+            resolved = self._validate_local_path(p)
             dst = self.base / p.name
-            if str(p.resolve()) != str(dst.resolve()):
-                shutil.copyfile(p, dst)
+            if str(resolved) != str(dst.resolve()):
+                shutil.copyfile(resolved, dst)
             text = None
             if modality in ("conversation", "text", "document"):
                 text = dst.read_text(encoding="utf-8")
