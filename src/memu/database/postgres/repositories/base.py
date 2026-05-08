@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from collections.abc import Mapping
 from typing import Any
 
@@ -10,6 +11,8 @@ from memu.database.postgres.session import SessionManager
 from memu.database.state import DatabaseState
 
 logger = logging.getLogger(__name__)
+
+_VALID_FIELD_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
 
 
 class PostgresRepoBase:
@@ -72,6 +75,9 @@ class PostgresRepoBase:
             if expected is None:
                 continue
             field, op = [*raw_key.split("__", 1), None][:2]
+            if not _VALID_FIELD_RE.match(str(field)):
+                msg = f"Invalid filter field name '{field}'"
+                raise ValueError(msg)
             column = getattr(model, str(field), None)
             if column is None:
                 msg = f"Unknown filter field '{field}' for model '{model.__name__}'"

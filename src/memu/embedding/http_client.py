@@ -16,6 +16,13 @@ def _load_proxy() -> str | None:
     return os.getenv("MEMU_HTTP_PROXY") or os.getenv("HTTP_PROXY") or os.getenv("HTTPS_PROXY") or None
 
 
+_SENSITIVE_HEADERS = {"authorization", "x-api-key", "api-key"}
+
+
+def _redact_headers(headers: dict[str, str]) -> dict[str, str]:
+    return {k: ("<redacted>" if k.lower() in _SENSITIVE_HEADERS else v) for k, v in headers.items()}
+
+
 logger = logging.getLogger(__name__)
 
 EMBEDDING_BACKENDS: dict[str, Callable[[], EmbeddingBackend]] = {
@@ -72,7 +79,7 @@ class HTTPEmbeddingClient:
             resp = await client.post(self.embedding_endpoint, json=payload, headers=self._headers())
             resp.raise_for_status()
             data = resp.json()
-        logger.debug("HTTP embedding response: %s", data)
+        logger.debug("HTTP embedding response (length): %d entries", len(data.get("data", [])))
         return self.backend.parse_embedding_response(data)
 
     async def embed_multimodal(
@@ -135,7 +142,7 @@ class HTTPEmbeddingClient:
             resp.raise_for_status()
             data = resp.json()
 
-        logger.debug("HTTP multimodal embedding response: %s", data)
+        logger.debug("HTTP multimodal embedding response (length): %d entries", len(data.get("data", [])))
         return self.backend.parse_multimodal_embedding_response(data)
 
     def _headers(self) -> dict[str, str]:

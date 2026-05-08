@@ -16,6 +16,21 @@ from openai.types.chat import (
 
 logger = logging.getLogger(__name__)
 
+_SENSITIVE_KEYS = {"api_key", "key", "secret", "password", "token", "authorization"}
+
+
+def _redact_sensitive(data: dict | object) -> str:
+    """Redact sensitive fields from an object before logging."""
+    if hasattr(data, "model_dump"):
+        d = data.model_dump()
+    elif isinstance(data, dict):
+        d = data
+    else:
+        return str(data)[:200]
+    if "usage" in d:
+        d = {"usage": d["usage"], "choices_len": len(d.get("choices", []))}
+    return str(d)[:500]
+
 
 class OpenAISDKClient:
     """OpenAI LLM client that relies on the official Python SDK."""
@@ -60,7 +75,7 @@ class OpenAISDKClient:
             max_tokens=max_tokens,
         )
         content = response.choices[0].message.content
-        logger.debug("OpenAI chat response: %s", response)
+        logger.debug("OpenAI chat response: %s", _redact_sensitive(response))
         return content or "", response
 
     async def summarize(
@@ -83,7 +98,7 @@ class OpenAISDKClient:
             max_tokens=max_tokens,
         )
         content = response.choices[0].message.content
-        logger.debug("OpenAI summarize response: %s", response)
+        logger.debug("OpenAI summarize response: %s", _redact_sensitive(response))
         return content or "", response
 
     async def vision(
@@ -149,7 +164,7 @@ class OpenAISDKClient:
             max_tokens=max_tokens,
         )
         content = response.choices[0].message.content
-        logger.debug("OpenAI vision response: %s", response)
+        logger.debug("OpenAI vision response: %s", _redact_sensitive(response))
         return content or "", response
 
     async def embed(self, inputs: list[str]) -> tuple[list[list[float]], CreateEmbeddingResponse | None]:
