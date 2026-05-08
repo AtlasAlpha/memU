@@ -67,6 +67,13 @@ class _OpenRouterEmbeddingBackend(_EmbeddingBackend):
         return [cast(list[float], d["embedding"]) for d in data["data"]]
 
 
+_SENSITIVE_HEADERS = {"authorization", "x-api-key", "api-key"}
+
+
+def _redact_headers(headers: dict[str, str]) -> dict[str, str]:
+    return {k: ("<redacted>" if k.lower() in _SENSITIVE_HEADERS else v) for k, v in headers.items()}
+
+
 logger = logging.getLogger(__name__)
 
 LLM_BACKENDS: dict[str, Callable[[], LLMBackend]] = {
@@ -142,7 +149,7 @@ class HTTPLLMClient:
             resp = await client.post(self.summary_endpoint, json=payload, headers=self._headers())
             resp.raise_for_status()
             data = resp.json()
-        logger.debug("HTTP LLM chat response: %s", data)
+        logger.debug("HTTP LLM chat response: %s", _redact_headers(data) if isinstance(data, dict) else data)
         return self.backend.parse_summary_response(data), data
 
     async def summarize(
@@ -155,7 +162,7 @@ class HTTPLLMClient:
             resp = await client.post(self.summary_endpoint, json=payload, headers=self._headers())
             resp.raise_for_status()
             data = resp.json()
-        logger.debug("HTTP LLM summarize response: %s", data)
+        logger.debug("HTTP LLM summarize response: %s", _redact_headers(data) if isinstance(data, dict) else data)
         return self.backend.parse_summary_response(data), data
 
     async def vision(
@@ -205,7 +212,7 @@ class HTTPLLMClient:
             resp = await client.post(self.summary_endpoint, json=payload, headers=self._headers())
             resp.raise_for_status()
             data = resp.json()
-        logger.debug("HTTP LLM vision response: %s", data)
+        logger.debug("HTTP LLM vision response (length): %d chars", len(str(data)))
         return self.backend.parse_summary_response(data), data
 
     async def embed(self, inputs: list[str]) -> tuple[list[list[float]], dict[str, Any]]:
@@ -215,7 +222,7 @@ class HTTPLLMClient:
             resp = await client.post(self.embedding_endpoint, json=payload, headers=self._headers())
             resp.raise_for_status()
             data = resp.json()
-        logger.debug("HTTP embedding response: %s", data)
+        logger.debug("HTTP embedding response (length): %d entries", len(data.get("data", [])))
         return self.embedding_backend.parse_embedding_response(data), data
 
     async def transcribe(
@@ -269,7 +276,7 @@ class HTTPLLMClient:
                         raw_response = resp.json()
                         result = raw_response.get("text", "")
 
-            logger.debug("HTTP audio transcribe response for %s: %s chars", audio_path, len(result))
+            logger.debug("Audio transcribe response for %s: %s chars", audio_path, len(result))
         except Exception:
             logger.exception("Audio transcription failed for %s", audio_path)
             raise

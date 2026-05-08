@@ -25,6 +25,7 @@ def normalize_value(v: str) -> str:
 
 
 Normalize = BeforeValidator(normalize_value)
+ValidateApiKey = BeforeValidator(_validate_not_placeholder)
 
 
 def _default_memory_types() -> list[str]:
@@ -99,13 +100,31 @@ class LazyLLMSource(BaseModel):
     stt_model: str = Field(default="qwen-audio-turbo", description="Speech-to-text model for lazyllm client backend")
 
 
+_KNOWN_PLACEHOLDER_KEYS: set[str] = {"OPENAI_API_KEY", "XAI_API_KEY", "YOUR_API_KEY_HERE", ""}
+
+
+def _validate_not_placeholder(v: str) -> str:
+    stripped = v.strip()
+    if stripped in _KNOWN_PLACEHOLDER_KEYS:
+        import warnings
+
+        warnings.warn(
+            f"API key appears to be a placeholder value ('{stripped}'). "
+            "Set a real API key via LLMConfig.api_key or the appropriate environment variable.",
+            stacklevel=2,
+        )
+    return v
+
+
 class LLMConfig(BaseModel):
     provider: str = Field(
         default="openai",
         description="Identifier for the LLM provider implementation (used by HTTP client backend).",
     )
     base_url: str = Field(default="https://api.openai.com/v1")
-    api_key: str = Field(default="OPENAI_API_KEY")
+    api_key: Annotated[str, ValidateApiKey] = Field(
+        default="OPENAI_API_KEY", description="API key for the LLM provider."
+    )
     chat_model: str = Field(default="gpt-4o-mini")
     client_backend: str = Field(
         default="sdk",

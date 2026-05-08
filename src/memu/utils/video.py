@@ -11,6 +11,22 @@ from typing import ClassVar
 
 logger = logging.getLogger(__name__)
 
+_MAX_VIDEO_BYTES = 2 * 1024 * 1024 * 1024  # 2 GB
+_ALLOWED_VIDEO_EXTENSIONS = frozenset({
+    ".mp4",
+    ".avi",
+    ".mov",
+    ".mkv",
+    ".webm",
+    ".flv",
+    ".wmv",
+    ".m4v",
+    ".mpg",
+    ".mpeg",
+    ".ts",
+    ".3gp",
+})
+
 
 class VideoFrameExtractor:
     """Extract frames from video files using ffmpeg."""
@@ -236,6 +252,16 @@ class VideoFrameExtractor:
         if not path_obj.exists():
             msg = f"{description} not found: {path}"
             raise FileNotFoundError(msg)
+        if not path_obj.is_file():
+            msg = f"{description} is not a regular file: {path}"
+            raise ValueError(msg)
+        if path_obj.stat().st_size > _MAX_VIDEO_BYTES:
+            msg = f"{description} exceeds maximum size of {_MAX_VIDEO_BYTES} bytes: {path}"
+            raise ValueError(msg)
+        suffix = path_obj.suffix.lower()
+        if suffix and suffix not in _ALLOWED_VIDEO_EXTENSIONS:
+            msg = f"Unsupported video format '{suffix}' for file: {path}"
+            raise ValueError(msg)
         return cls._ensure_safe_cli_path(path_obj)
 
     @classmethod
