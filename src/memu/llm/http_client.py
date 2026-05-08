@@ -142,7 +142,7 @@ class HTTPLLMClient:
             resp = await client.post(self.summary_endpoint, json=payload, headers=self._headers())
             resp.raise_for_status()
             data = resp.json()
-        logger.debug("HTTP LLM chat response: %s", data)
+        logger.debug("HTTP LLM chat response received (%d chars)", len(str(data)))
         return self.backend.parse_summary_response(data), data
 
     async def summarize(
@@ -155,7 +155,7 @@ class HTTPLLMClient:
             resp = await client.post(self.summary_endpoint, json=payload, headers=self._headers())
             resp.raise_for_status()
             data = resp.json()
-        logger.debug("HTTP LLM summarize response: %s", data)
+        logger.debug("HTTP LLM summarize response received (%d chars)", len(str(data)))
         return self.backend.parse_summary_response(data), data
 
     async def vision(
@@ -205,7 +205,7 @@ class HTTPLLMClient:
             resp = await client.post(self.summary_endpoint, json=payload, headers=self._headers())
             resp.raise_for_status()
             data = resp.json()
-        logger.debug("HTTP LLM vision response: %s", data)
+        logger.debug("HTTP LLM vision response received (%d chars)", len(str(data)))
         return self.backend.parse_summary_response(data), data
 
     async def embed(self, inputs: list[str]) -> tuple[list[list[float]], dict[str, Any]]:
@@ -215,7 +215,7 @@ class HTTPLLMClient:
             resp = await client.post(self.embedding_endpoint, json=payload, headers=self._headers())
             resp.raise_for_status()
             data = resp.json()
-        logger.debug("HTTP embedding response: %s", data)
+        logger.debug("HTTP embedding response received (%d items)", len(data.get("data", [])))
         return self.embedding_backend.parse_embedding_response(data), data
 
     async def transcribe(

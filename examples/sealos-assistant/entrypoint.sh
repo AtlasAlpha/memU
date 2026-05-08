@@ -10,4 +10,6 @@ if [ -d "venv" ]; then
 fi
 
 # Start the application
+# NOTE: In production, ensure authentication is configured.
+# Consider adding API key auth, JWT validation, or running behind an auth proxy.
 exec uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}

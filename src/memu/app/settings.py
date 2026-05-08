@@ -240,6 +240,10 @@ class MemorizeConfig(BaseModel):
         default=False,
         description="Enable reinforcement tracking for memory items.",
     )
+    max_resource_bytes: int = Field(
+        default=0,
+        description="Maximum resource file size in bytes for download (0 = unlimited) via HTTP fetch.",
+    )
 
 
 class PatchConfig(BaseModel):

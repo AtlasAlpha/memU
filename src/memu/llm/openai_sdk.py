@@ -60,7 +60,7 @@ class OpenAISDKClient:
             max_tokens=max_tokens,
         )
         content = response.choices[0].message.content
-        logger.debug("OpenAI chat response: %s", response)
+        logger.debug("OpenAI chat response received (%d chars)", len(content or ""))
         return content or "", response
 
     async def summarize(
@@ -83,7 +83,7 @@ class OpenAISDKClient:
             max_tokens=max_tokens,
         )
         content = response.choices[0].message.content
-        logger.debug("OpenAI summarize response: %s", response)
+        logger.debug("OpenAI summarize response received (%d chars)", len(content or ""))
         return content or "", response
 
     async def vision(
@@ -149,7 +149,7 @@ class OpenAISDKClient:
             max_tokens=max_tokens,
         )
         content = response.choices[0].message.content
-        logger.debug("OpenAI vision response: %s", response)
+        logger.debug("OpenAI vision response received (%d chars)", len(content or ""))
         return content or "", response
 
     async def embed(self, inputs: list[str]) -> tuple[list[list[float]], CreateEmbeddingResponse | None]:
